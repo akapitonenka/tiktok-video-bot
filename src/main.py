@@ -8,6 +8,7 @@ from VideoService import VideoService
 
 app = Flask(__name__)
 
+requests_service = RequestsService(BOT_TOKEN)
 tiktok_parser = TikTokParser()
 video_service = VideoService()
 
@@ -21,21 +22,21 @@ def index():
         if r.get('message', None) == None:
             return message
 
-        requests_service = RequestsService(BOT_TOKEN, CHANNEL_ID)
+        chat_id = r['message']['chat']['id']
 
         video_src = tiktok_parser.get_video_src(r['message']['text'])
 
         if video_src == None:
-            requests_service.send_message('Здесь должна быть ссылка на видос тик тока')
+            requests_service.send_message(chat_id, 'Здесь должна быть ссылка на видос тик тока')
 
             return message
 
         video_service.save_video(video_src)
 
-        r = requests_service.send_video(video_service.video_name)
+        r = requests_service.send_video(CHANNEL_ID, video_service.video_name)
 
         if r.status_code != 200:
-            requests_service.send_message('Случился рофл, попробуй еще раз')
+            requests_service.send_message(chat_id, 'Случился рофл, попробуй еще раз')
 
             return message
 
